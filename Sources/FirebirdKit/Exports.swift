@@ -6,3 +6,4 @@
 //
 
 @_exported import FirebirdNIO
+@_exported import SQLKit
