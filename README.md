@@ -1,3 +1,3 @@
 # FirebirdKit
 
-A description of this package.
+Provide helpers to use FirebirdNIO

@@ -1,5 +1,5 @@
 //
-//  Int+FirebirdEncodable.swift
+//  Int+FirebirdCodable.swift
 //  
 //
 //  Created by Ugo Cottin on 19/03/2021.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension Int: FirebirdEncodable {
+extension Int: FirebirdCodable {
 	public static var firebirdDataType: FirebirdDataType { .double }
 	
 	public var firebirdData: FirebirdData {

@@ -5,6 +5,8 @@
 //  Created by Ugo Cottin on 19/03/2021.
 //
 
+import Foundation
+
 public class FirebirdDecoder {
 	
 	public typealias Data = FirebirdData
@@ -31,12 +33,20 @@ public extension FirebirdDecoder {
 		switch type {
 			case is Int.Type, is Int?.Type:
 				return self.data.long as! T
+			case is String.Type, is String?.Type:
+				return self.data.string as! T
+			case is Date.Type, is Date?.Type:
+				return self.data.string as! T
 			default:
-				throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: self.codingPath, debugDescription: "ça marche po"))
+				throw Error.unsupportedType(type.self)
 		}
-
 	}
-
+	
+	enum Error: Swift.Error {
+		
+		/// Error while trying to decode an unsupported type
+		case unsupportedType(Decodable.Type)
+	}
 }
 
 extension FirebirdDecoder: Decoder {
@@ -92,8 +102,6 @@ extension FirebirdDecoder: Decoder {
 		func superDecoder(forKey key: Key) throws -> Decoder {
 			self.decoder
 		}
-		
-		
 	}
 	
 	private struct UnkeyedContainer: UnkeyedDecodingContainer, SingleValueDecodingContainer {
@@ -127,6 +135,5 @@ extension FirebirdDecoder: Decoder {
 		mutating func superDecoder() throws -> Decoder {
 			return self.decoder
 		}
-		
 	}
 }
