@@ -26,5 +26,13 @@ extension Double: FirebirdCodable {
 			value: data)
 	}
 	
+	public init(from firebirdData: FirebirdData) throws {
+		guard let value = firebirdData.int64 else {
+			throw FirebirdDecoder.FirebirdDecoderError.unableToDecodeDataToType(Self.self)
+		}
+		
+		self = value
+	}
+	
 	
 }

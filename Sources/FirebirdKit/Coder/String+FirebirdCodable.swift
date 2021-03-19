@@ -8,6 +8,15 @@
 import Foundation
 
 extension String: FirebirdCodable {
+	
+	public init(from firebirdData: FirebirdData) throws {
+		guard let value = firebirdData.string else {
+			throw FirebirdDecoder.FirebirdDecoderError.unableToDecodeDataToType(Self.self)
+		}
+		
+		self = value
+	}
+	
 	public static var firebirdDataType: FirebirdDataType { .text }
 	
 	public var firebirdData: FirebirdData {

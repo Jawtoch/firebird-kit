@@ -7,14 +7,6 @@
 
 public protocol FirebirdDecodable: Decodable {
 	
-	init(fromFirebird decoder: FirebirdDecoder) throws
-	
-}
-
-public extension FirebirdDecodable {
-	
-	init(fromFirebird decoder: FirebirdDecoder) throws {
-		try self.init(from: decoder)
-	}
+	init(from firebirdData: FirebirdData) throws
 	
 }

@@ -5,114 +5,153 @@
 //  Created by Ugo Cottin on 17/03/2021.
 //
 
-public class FirebirdEncoder {
+public struct FirebirdEncoder {
 	
-	public var data: FirebirdData? = nil
+	public typealias Data = FirebirdData
 	
-	public init() { }
-}
-
-public extension FirebirdEncoder {
-	
-	static func encode(_ value: FirebirdEncodable) throws -> FirebirdData? {
-		let encoder = FirebirdEncoder()
-		try value.firebirdEncode(to: encoder)
-		return encoder.data
+	public enum FirebirdEncoderError: Error {
+		case unsupportedOperation
+		case unsupportedType(Any.Type)
 	}
-}
-
-public extension FirebirdEncoder {
 	
-	func encode<T>(_ value: T) throws where T: Encodable {
+	private final class FirebirdEncoderContext {
+		var value: FirebirdEncoder.Data?
+		var array: [FirebirdEncoder.Data]?
+		var keyedArray: [(CodingKey, FirebirdEncoder.Data)]?
 		
-		if let value = value as? FirebirdEncodable {
-			self.data = value.firebirdData
-		} else {
-			print(T.Type.self)
-			throw EncodingError.invalidValue(value, EncodingError.Context.init(codingPath: self.codingPath, debugDescription: "ça marche po"))
+		init() { }
+	}
+	
+	private struct _Encoder: Encoder {
+		
+		let context: FirebirdEncoderContext
+		
+		var codingPath: [CodingKey] = []
+		
+		var userInfo: [CodingUserInfoKey : Any] = [:]
+		
+		func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> where Key : CodingKey {
+			self.context.keyedArray = []
+			return KeyedEncodingContainer(_KeyedContainer(encoder: self, context: self.context, codingPath: self.codingPath))
+		}
+		
+		func unkeyedContainer() -> UnkeyedEncodingContainer {
+			self.context.array = []
+			return _UnkeyedContainer(encoder: self, context: self.context, codingPath: self.codingPath)
+		}
+		
+		func singleValueContainer() -> SingleValueEncodingContainer {
+			return _ValueContainer(encoder: self, context: self.context, codingPath: self.codingPath)
 		}
 	}
 	
-}
-
-
-extension FirebirdEncoder: Encoder {
-	
-	public var codingPath: [CodingKey] { [] }
-	
-	public var userInfo: [CodingUserInfoKey : Any] { [:] }
-	
-	public func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> where Key : CodingKey {
-		let container = KeyedContainer<Key>(encoder: self, codingPath: self.codingPath)
-		return .init(container)
-	}
-	
-	public func unkeyedContainer() -> UnkeyedEncodingContainer {
-		return UnkeyedContainer(encoder: self, codingPath: self.codingPath)
-	}
-	
-	public func singleValueContainer() -> SingleValueEncodingContainer {
-		return UnkeyedContainer(encoder: self, codingPath: self.codingPath)
-	}
-	
-	private struct KeyedContainer<Key: CodingKey>: KeyedEncodingContainerProtocol {
+	private struct _UnkeyedContainer: UnkeyedEncodingContainer {
 		
-		let encoder: FirebirdEncoder
+		let encoder: Encoder
 		
-		var codingPath: [CodingKey]
-		
-		mutating func encodeNil(forKey key: Key) throws { }
-		
-		mutating func encode<T>(_ value: T, forKey key: Key) throws where T : Encodable {
-			try self.encoder.encode(value)
-		}
-		
-		mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: Key) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
-			self.encoder.container(keyedBy: keyType)
-		}
-		
-		mutating func nestedUnkeyedContainer(forKey key: Key) -> UnkeyedEncodingContainer {
-			self.encoder.unkeyedContainer()
-		}
-		
-		mutating func superEncoder() -> Encoder {
-			self.encoder
-		}
-		
-		mutating func superEncoder(forKey key: Key) -> Encoder {
-			encoder
-		}
-
-	}
-	
-	private struct UnkeyedContainer: UnkeyedEncodingContainer, SingleValueEncodingContainer {
-		
-		let encoder: FirebirdEncoder
+		let context: FirebirdEncoderContext
 		
 		var codingPath: [CodingKey] = []
 		
 		var count: Int = 0
 		
+		mutating func encode<T>(_ value: T) throws where T : Encodable {
+			try self.context.array!.append(FirebirdEncoder().encode(value))
+		}
+		
+		mutating func encodeNil() throws { }
+		
 		mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
-			self.encoder.container(keyedBy: keyType)
+			fatalError()
 		}
 		
 		mutating func nestedUnkeyedContainer() -> UnkeyedEncodingContainer {
-			self.encoder.unkeyedContainer()
+			fatalError()
 		}
 		
 		mutating func superEncoder() -> Encoder {
-			self.encoder
+			return self.encoder
+		}
+	}
+	
+	private struct _KeyedContainer<Key>: KeyedEncodingContainerProtocol where Key: CodingKey {
+		
+		let encoder: Encoder
+		
+		let context: FirebirdEncoderContext
+		
+		var codingPath: [CodingKey] = []
+		
+		mutating func encodeNil(forKey key: Key) throws { }
+		
+		mutating func encode<T>(_ value: T, forKey key: Key) throws where T : Encodable {
+			try self.context.keyedArray!
+				.append((key, FirebirdEncoder().encode(value)))
 		}
 		
-		mutating func encode<T>(_ value: T) throws where T : Encodable {
-			try self.encoder.encode(value)
+		mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: Key) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
+			fatalError()
 		}
-
-		mutating func encodeNil() throws {
-			
+		
+		mutating func nestedUnkeyedContainer(forKey key: Key) -> UnkeyedEncodingContainer {
+			fatalError()
+		}
+		
+		mutating func superEncoder() -> Encoder {
+			return self.encoder
+		}
+		
+		mutating func superEncoder(forKey key: Key) -> Encoder {
+			return self.encoder
 		}
 		
 	}
 	
+	private struct _ValueContainer: SingleValueEncodingContainer {
+		
+		let encoder: Encoder
+		
+		let context: FirebirdEncoderContext
+		
+		var codingPath: [CodingKey] = []
+		
+		mutating func encodeNil() throws { }
+		
+		mutating func encode<T>(_ value: T) throws where T : Encodable {
+			self.context.value = try FirebirdEncoder().encode(value)
+		}
+		
+		
+	}
+	
+	
+	public func encode(_ value: Encodable) throws -> Data {
+		if let value = value as? FirebirdEncodable {
+			return value.firebirdData
+		}
+		
+		let context = FirebirdEncoderContext()
+		try value.encode(to: _Encoder(context: context))
+		
+		if let value = context.value {
+			return value
+		}
+		
+		if let _ = context.array {
+			throw FirebirdEncoderError.unsupportedOperation
+		}
+		
+		if let _ = context.keyedArray {
+			throw FirebirdEncoderError.unsupportedOperation
+		}
+		
+		throw FirebirdEncoderError.unsupportedType(type(of: value))
+	}
+}
+
+public extension FirebirdEncoder {
+	
+	static func encode(_ value: FirebirdEncodable) throws -> FirebirdEncoder.Data? {
+		return try FirebirdEncoder().encode(value)
+	}
 }
