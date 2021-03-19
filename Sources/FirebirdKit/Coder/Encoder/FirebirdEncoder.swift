@@ -6,12 +6,14 @@
 //
 
 public class FirebirdEncoder {
+	
 	public var data: FirebirdData? = nil
 	
 	public init() { }
 }
 
 public extension FirebirdEncoder {
+	
 	static func encode(_ value: FirebirdEncodable) throws -> FirebirdData? {
 		let encoder = FirebirdEncoder()
 		try value.firebirdEncode(to: encoder)
@@ -20,6 +22,7 @@ public extension FirebirdEncoder {
 }
 
 public extension FirebirdEncoder {
+	
 	func encode<T>(_ value: T) throws where T: Encodable {
 		
 		if let value = value as? FirebirdEncodable {
@@ -34,6 +37,7 @@ public extension FirebirdEncoder {
 
 
 extension FirebirdEncoder: Encoder {
+	
 	public var codingPath: [CodingKey] { [] }
 	
 	public var userInfo: [CodingUserInfoKey : Any] { [:] }

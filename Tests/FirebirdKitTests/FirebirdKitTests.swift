@@ -28,11 +28,13 @@ final class FirebirdKitTests: XCTestCase {
 		let value: Int? = 87
 		let encoder = FirebirdEncoder()
 		try encoder.encode(value)
-		if let data = encoder.data {
-			print(data)
-		} else {
-			print("no data")
+		guard let data = encoder.data else {
+			throw XCTestError(XCTestError.Code.failureWhileWaiting)
 		}
+		
+		let decoder = FirebirdDecoder(data: data)
+		let decoded = try decoder.decode(Int?.self)
+		XCTAssertEqual(value, decoded)
 	}
 	
     static var allTests = [
