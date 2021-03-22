@@ -7,11 +7,20 @@
 
 public struct FirebirdSQLDatabase {
 	
-	let database: FirebirdDatabase
+	public let database: FirebirdDatabase
 	
-	let encoder: FirebirdEncoder = FirebirdEncoder()
+	public let encoder: FirebirdEncoder
 	
-	let decoder: FirebirdDecoder
+	public let decoder: FirebirdDecoder
+	
+	public init(
+		database: FirebirdDatabase,
+		encoder: FirebirdEncoder = FirebirdEncoder(),
+		decoder: FirebirdDecoder = FirebirdDecoder()) {
+		self.database = database
+		self.encoder = encoder
+		self.decoder = decoder
+	}
 }
 
 extension FirebirdSQLDatabase: SQLDatabase {

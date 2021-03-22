@@ -14,6 +14,8 @@ public struct FirebirdEncoder {
 		case unsupportedType(Any.Type)
 	}
 	
+	public init() { }
+	
 	private final class FirebirdEncoderContext {
 		var value: FirebirdEncoder.Data?
 		var array: [FirebirdEncoder.Data]?

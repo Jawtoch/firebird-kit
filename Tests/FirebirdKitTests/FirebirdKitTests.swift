@@ -37,6 +37,37 @@ final class FirebirdKitTests: XCTestCase {
 
 		XCTAssertEqual(Int(date.timeIntervalSince1970), Int(copy!.timeIntervalSince1970))
 	}
+	
+	func testSQLDatabase() {
+		let group = DispatchGroup()
+		
+		group.enter()
+		
+		let eventLoop = EmbeddedEventLoop()
+		let logger = Logger(label: "dev.firebird.test")
+		let connection = FirebirdConnection.connect(
+			FirebirdDatabaseConfiguration(hostname: "localhost", port: 3051, username: "SYSDBA", password: "MASTERKEY", database: "EMPLOYEE"),
+			logger: logger,
+			on: eventLoop)
+		
+		let database = connection.map { conn -> FirebirdSQLDatabase in
+			return FirebirdSQLDatabase(database: conn)
+		}
+		
+		database.whenFailure { error in
+			print(error)
+			XCTAssert(false)
+			group.leave()
+		}
+		
+		XCTAssertNoThrow {
+			let _ = try database.wait()
+			group.leave()
+		}
+		
+		let _ = group.wait(timeout: DispatchTime(uptimeNanoseconds: 10 * 1_000))
+		XCTAssert(false)
+	}
 
     static var allTests = [
         ("codableInt", testCodableInt),

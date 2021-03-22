@@ -16,6 +16,8 @@ public struct FirebirdDecoder {
 		case unableToDecodeDataToType(FirebirdDecodable.Type)
 	}
 	
+	public init() { }
+	
 	public func decode<T>(_ type: T.Type, from data: FirebirdDecoder.Data) throws -> T where T: Decodable {
 		
 		if let value = T.self as? FirebirdDecodable.Type {
