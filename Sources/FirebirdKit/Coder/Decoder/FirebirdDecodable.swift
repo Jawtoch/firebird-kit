@@ -7,6 +7,17 @@
 
 public protocol FirebirdDecodable: Decodable {
 	
-	init(from firebirdData: FirebirdData) throws
+	init?(from firebirdData: FirebirdData) throws
 	
+}
+
+extension Optional: FirebirdDecodable where Wrapped: FirebirdDecodable {
+	
+	public init?(from firebirdData: FirebirdData) throws {
+		if firebirdData.value != nil {
+			self = try Wrapped(from: firebirdData)
+		} else {
+			return nil
+		}
+	}
 }

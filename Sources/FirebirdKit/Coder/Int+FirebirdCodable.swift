@@ -25,7 +25,7 @@ extension Int: FirebirdCodable {
 	}
 	
 	public init(from firebirdData: FirebirdData) throws {
-		guard let value = firebirdData.long else {
+		guard let value = firebirdData.long ?? firebirdData.short else {
 			throw FirebirdDecoder.FirebirdDecoderError.unableToDecodeDataToType(Self.self)
 		}
 		
