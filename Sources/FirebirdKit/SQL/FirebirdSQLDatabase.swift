@@ -46,4 +46,10 @@ extension FirebirdSQLDatabase: SQLDatabase {
 			return self.eventLoop.makeFailedFuture(error)
 		}
 	}
+	
+	public func serialize(_ expression: SQLExpression) -> (sql: String, binds: [Encodable]) {
+		var serializer = SQLSerializer(database: self)
+		expression.serialize(to: &serializer)
+		return (serializer.sql, serializer.binds)
+	}
 }
