@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import FirebirdNIO
 
 extension Date: FirebirdCodable {
 	public static var firebirdDataType: FirebirdDataType { .timestamp }
