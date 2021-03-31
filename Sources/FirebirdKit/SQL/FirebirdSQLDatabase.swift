@@ -7,14 +7,14 @@
 
 public struct FirebirdSQLDatabase {
 	
-	public let database: FirebirdDatabase
+	public let database: FirebirdNIODatabase
 	
 	public let encoder: FirebirdEncoder
 	
 	public let decoder: FirebirdDecoder
 	
 	public init(
-		database: FirebirdDatabase,
+		database: FirebirdNIODatabase,
 		encoder: FirebirdEncoder = FirebirdEncoder(),
 		decoder: FirebirdDecoder = FirebirdDecoder()) {
 		self.database = database
@@ -31,20 +31,25 @@ extension FirebirdSQLDatabase: SQLDatabase {
 	public var dialect: SQLDialect { FirebirdDialect( )}
 	
 	public func execute(sql query: SQLExpression, _ onRow: @escaping (SQLRow) -> ()) -> EventLoopFuture<Void> {
+		let promise = self.eventLoop.makePromise(of: Void.self)
+		
 		let (sql, binds) = self.serialize(query)
-
 		do {
 			let firebirdBinds = try binds.map { try self.encoder.encode($0) }
-			return self.database.query(
-				sql,
-				firebirdBinds,
-				onMetadata: { print("Metadata: \($0)") },
-				onRow: { print("Row: \($0)") })
-				.map { _ in }
-			
+			self.database.query(sql, firebirdBinds) { print($0) }
+				.cascade(to: promise)
+//			return self.database.query(
+//				sql,
+//				firebirdBinds,
+//				onMetadata: { print("Metadata: \($0)") },
+//				onRow: { print("Row: \($0)") })
+//				.map { _ in }
+//
 		} catch {
-			return self.eventLoop.makeFailedFuture(error)
+			promise.fail(error)
 		}
+		
+		return promise.futureResult
 	}
 	
 	public func serialize(_ expression: SQLExpression) -> (sql: String, binds: [Encodable]) {

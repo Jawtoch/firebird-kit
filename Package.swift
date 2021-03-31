@@ -17,7 +17,7 @@ let package = Package(
 		.target(
 			name: "FirebirdKit",
 			dependencies: [
-				.product(name: "FirebirdNIO", package: "firebird-nio"),
+				.product(name: "FirebirdNIO2", package: "firebird-nio"),
 				.product(name: "SQLKit", package: "sql-kit"),
 			]),
 		.testTarget(name: "FirebirdKitTests", dependencies: ["FirebirdKit"]),

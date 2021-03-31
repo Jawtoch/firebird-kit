@@ -39,14 +39,10 @@ final class FirebirdKitTests: XCTestCase {
 	}
 	
 	func testSQLDatabase() {
-		let group = DispatchGroup()
-		
-		group.enter()
-		
 		let eventLoop = EmbeddedEventLoop()
 		let logger = Logger(label: "dev.firebird.test")
-		let connection = FirebirdConnection.connect(
-			FirebirdDatabaseConfiguration(hostname: "localhost", port: 3051, username: "SYSDBA", password: "MASTERKEY", database: "EMPLOYEE"),
+		let connection = FirebirdNIOConnection.connect(
+			FirebirdConnectionConfiguration(hostname: "localhost", port: 3051, username: "SYSDBA", password: "MASTERKEY", database: "EMPLOYEE"),
 			logger: logger,
 			on: eventLoop)
 		
@@ -57,16 +53,11 @@ final class FirebirdKitTests: XCTestCase {
 		database.whenFailure { error in
 			print(error)
 			XCTAssert(false)
-			group.leave()
 		}
 		
 		XCTAssertNoThrow {
 			let _ = try database.wait()
-			group.leave()
 		}
-		
-		let _ = group.wait(timeout: DispatchTime(uptimeNanoseconds: 10 * 1_000))
-		XCTAssert(false)
 	}
 
     static var allTests = [
