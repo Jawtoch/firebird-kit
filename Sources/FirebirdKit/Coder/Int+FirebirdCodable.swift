@@ -25,7 +25,40 @@ extension Int: FirebirdCodable {
 	}
 	
 	public init(from firebirdData: FirebirdData) throws {
-		guard let value = firebirdData.long ?? firebirdData.short else {
+		if let value = firebirdData.value, value.count == 2 {
+			self = Int(try Int16(from: firebirdData))
+			return
+		}
+		
+		guard let value = firebirdData.long else {
+			throw FirebirdDecoder.FirebirdDecoderError.unableToDecodeDataToType(Self.self)
+		}
+		
+		self = value
+	}
+	
+	
+}
+
+extension Int16: FirebirdCodable {
+	public static var firebirdDataType: FirebirdDataType { .short }
+	
+	public var firebirdData: FirebirdData {
+		var data: Data = Data()
+		var copy = self
+		
+		
+		withUnsafeBytes(of: &copy) { uself in
+			data.append(contentsOf: uself)
+		}
+		
+		return FirebirdData(
+			type: Self.firebirdDataType,
+			value: data)
+	}
+	
+	public init(from firebirdData: FirebirdData) throws {
+		guard let value = firebirdData.short else {
 			throw FirebirdDecoder.FirebirdDecoderError.unableToDecodeDataToType(Self.self)
 		}
 		
