@@ -8,3 +8,13 @@
 //@_exported import FirebirdNIO
 @_exported import FirebirdNIO2
 @_exported import SQLKit
+
+import Foundation
+
+extension Data {
+	
+	var hexDescription: String {
+		self.map { String(format: "%02x", $0) }.joined(separator: ", ")
+	}
+	
+}
