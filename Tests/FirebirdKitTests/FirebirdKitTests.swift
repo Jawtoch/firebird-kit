@@ -3,65 +3,73 @@ import XCTest
 
 final class FirebirdKitTests: XCTestCase {
 	
-	/// Test if an int is codable
-	func testCodableInt() throws {
-		let value: Int? = 87
+	private func encodeAndDecode<T>(_ value: T) throws -> T where T: Codable {
 		let encoded = try FirebirdEncoder().encode(value)
-		let decoded = try FirebirdDecoder().decode(Int?.self, from: encoded)
+		let decoded = try FirebirdDecoder().decode(T.self, from: encoded)
+		return decoded
+	}
+	
+	func testCodableBool() throws {
+		for value in [true, false] {
+			let decoded = try self.encodeAndDecode(value)
+			XCTAssertEqual(value, decoded)
+		}
+	}
+
+	func testCodableInt() throws {
+		let values: [Int32] = [.min, .zero, .max]
+		for value in values {
+			let decoded = try self.encodeAndDecode(value)
+			XCTAssertEqual(value, decoded)
+		}
+	}
+	
+	func testCodableRandomInt() throws {
+		let value: Int32 = .random(in: .min ... .max)
+		let decoded = try self.encodeAndDecode(value)
 		XCTAssertEqual(value, decoded)
 	}
 	
 	func testCodableString() throws {
 		let value: String = "Hello, world!"
-		let encoded = try FirebirdEncoder.encode(value)
-		XCTAssertNotNil(encoded)
-		
-		let decoded = try FirebirdDecoder().decode(String.self, from: encoded!)
+		let decoded = try self.encodeAndDecode(value)
 		XCTAssertEqual(value, decoded)
 	}
 	
 	func testCodableDate() throws {
-		let value: Date = Date()
-		let encoded = try FirebirdEncoder.encode(value)
-		XCTAssertNotNil(encoded)
-		
-		let decoded = try FirebirdDecoder().decode(Date.self, from: encoded!)
-		XCTAssertEqual(Int(value.timeIntervalSince1970), Int(decoded.timeIntervalSince1970))
+		let values: [Date] = [.init(timeIntervalSince1970: 0), .init(), .distantFuture]
+		for value in values {
+			let decoded = try self.encodeAndDecode(value)
+			XCTAssertEqual(floor(value.timeIntervalSince1970), floor(decoded.timeIntervalSince1970))
+		}
 	}
 	
-	func testDateConversion() {
-		let date: Date = Date()
-		let ctime = date.tm_time
-		let copy: Date? = Date(tm_time: ctime)
-		XCTAssertNotNil(copy)
-
-		XCTAssertEqual(Int(date.timeIntervalSince1970), Int(copy!.timeIntervalSince1970))
+	func testCodableDouble() throws {
+		let values: [Double] = [.pi, .zero]
+		for value in values {
+			let decoded = try self.encodeAndDecode(value)
+			XCTAssertEqual(value, decoded)
+		}
 	}
 	
-	func testSQLDatabase() {
-		let eventLoop = EmbeddedEventLoop()
-		let logger = Logger(label: "dev.firebird.test")
-		let connection = FirebirdNIOConnection.connect(
-			FirebirdConnectionConfiguration(hostname: "localhost", port: 3051, username: "SYSDBA", password: "MASTERKEY", database: "EMPLOYEE"),
-			logger: logger,
-			on: eventLoop)
-		
-		let database = connection.map { conn -> FirebirdSQLDatabase in
-			return FirebirdSQLDatabase(database: conn)
+	func testNonFirebirdCodable() throws {
+		struct Dummy: Codable {
+			let foo: String
+			let bar: Int
 		}
 		
-		database.whenFailure { error in
-			print(error)
-			XCTAssert(false)
-		}
-		
-		XCTAssertNoThrow {
-			let _ = try database.wait()
+		let values: [Dummy] = [Dummy(foo: "one", bar: 1), Dummy(foo: "two", bar: 2)]
+		for value in values {
+			XCTAssertThrowsError(try FirebirdEncoder().encode(value))
 		}
 	}
-
+	
     static var allTests = [
-        ("codableInt", testCodableInt),
-		("codableString", testCodableString),
+		("testCodableBool", testCodableBool),
+		("testCodableInt", testCodableInt),
+		("testCodableRandomInt", testCodableRandomInt),
+		("testCodableString", testCodableString),
+        ("testCodableDate", testCodableDate),
+		("testCodableDouble", testCodableDouble),
     ]
 }

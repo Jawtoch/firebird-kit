@@ -9,6 +9,12 @@ import Foundation
 
 extension String: FirebirdCodable {
 	
+	public static var firebirdDataType: FirebirdDataType { .text }
+	
+	public var firebirdData: FirebirdData {
+		return FirebirdData(type: Self.firebirdDataType, value: self.data(using: .utf8))
+	}
+	
 	public init(from firebirdData: FirebirdData) throws {
 		guard let value = firebirdData.string else {
 			throw FirebirdDecoder.FirebirdDecoderError.unableToDecodeDataToType(Self.self)
@@ -17,9 +23,4 @@ extension String: FirebirdCodable {
 		self = value
 	}
 	
-	public static var firebirdDataType: FirebirdDataType { .text }
-	
-	public var firebirdData: FirebirdData {
-		return FirebirdData(type: Self.firebirdDataType, value: self.data(using: .utf8))
-	}
 }

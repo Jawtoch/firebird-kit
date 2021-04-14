@@ -13,6 +13,7 @@ public struct FirebirdDecoder {
 	
 	public enum FirebirdDecoderError: Error {
 		case unsupportedOperation
+		case unsupportedType(Any.Type)
 		case unableToDecodeDataToType(FirebirdDecodable.Type)
 	}
 	
@@ -24,7 +25,7 @@ public struct FirebirdDecoder {
 			return try value.init(from: data) as! T
 		}
 		
-		return try T.init(from: _Decoder(data: data))
+		throw FirebirdDecoderError.unsupportedType(T.self)
 	}
 	
 	private struct _Decoder: Decoder {
@@ -36,20 +37,18 @@ public struct FirebirdDecoder {
 		var userInfo: [CodingUserInfoKey : Any] = [:]
 		
 		func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey {
-			throw FirebirdDecoder.FirebirdDecoderError.unsupportedOperation
+			return KeyedDecodingContainer(_KeyedContainer(decoder: FirebirdDecoder(), data: self.data))
 		}
 		
 		func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-		
 			// TODO: support for array. While array type is not supported, this function will throw an unsupported error
 			throw FirebirdDecoder.FirebirdDecoderError.unsupportedOperation
-//			return _UnkeyedContainer(decoder: self, array: [])
-			
 		}
 		
 		func singleValueContainer() throws -> SingleValueDecodingContainer {
 			return _ValueContainer(decoder: self, data: self.data, codingPath: self.codingPath)
 		}
+		
 	}
 	
 	private struct _UnkeyedContainer: UnkeyedDecodingContainer {
@@ -86,7 +85,6 @@ public struct FirebirdDecoder {
 			return self.decoder
 		}
 		
-		
 	}
 			
 	private struct _ValueContainer: SingleValueDecodingContainer {
@@ -98,13 +96,53 @@ public struct FirebirdDecoder {
 		var codingPath: [CodingKey] = []
 		
 		func decodeNil() -> Bool {
-			return false
+			return self.data.value == nil
 		}
 		
 		func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
 			return try FirebirdDecoder().decode(T.self, from: self.data)
 		}
 		
+	}
+	
+	private struct _KeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
+		
+		let decoder: FirebirdDecoder
+		
+		let data: FirebirdData
+		
+		var codingPath: [CodingKey] = []
+		
+		var allKeys: [Key] = []
+		
+		func contains(_ key: Key) -> Bool {
+			self.allKeys.contains { $0.stringValue == key.stringValue }
+		}
+		
+		func decodeNil(forKey key: Key) throws -> Bool {
+			return self.data.value == nil
+		}
+		
+		func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T : Decodable {
+			try self.decoder.decode(T.self, from: self.data)
+		}
+		
+		func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: Key) throws -> KeyedDecodingContainer<NestedKey> where NestedKey : CodingKey {
+			throw FirebirdDecoder.FirebirdDecoderError.unsupportedOperation
+		}
+		
+		func nestedUnkeyedContainer(forKey key: Key) throws -> UnkeyedDecodingContainer {
+			throw FirebirdDecoder.FirebirdDecoderError.unsupportedOperation
+		}
+		
+		func superDecoder() throws -> Decoder {
+			throw FirebirdDecoder.FirebirdDecoderError.unsupportedOperation
+		}
+		
+		func superDecoder(forKey key: Key) throws -> Decoder {
+			throw FirebirdDecoder.FirebirdDecoderError.unsupportedOperation
+		}
 		
 	}
+	
 }

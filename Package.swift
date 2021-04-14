@@ -10,14 +10,14 @@ let package = Package(
 		.library(name: "FirebirdKit", targets: ["FirebirdKit"]),
 	],
 	dependencies: [
-		.package(name: "firebird-nio", path: "../firebird-nio"),
+		.package(url: "https://github.com/Jawtoch/firebird-nio.git", from: "0.1.0"),
 		.package(url: "https://github.com/vapor/sql-kit.git", from: "3.1.0"),
 	],
 	targets: [
 		.target(
 			name: "FirebirdKit",
 			dependencies: [
-				.product(name: "FirebirdNIO2", package: "firebird-nio"),
+				.product(name: "FirebirdNIO", package: "firebird-nio"),
 				.product(name: "SQLKit", package: "sql-kit"),
 			]),
 		.testTarget(name: "FirebirdKitTests", dependencies: ["FirebirdKit"]),
