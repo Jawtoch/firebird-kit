@@ -8,10 +8,11 @@
 import Foundation
 
 extension Double: FirebirdCodable {
+	
 	public static var firebirdDataType: FirebirdDataType { .int64 }
 	
 	public var firebirdData: FirebirdData {
-		let bitsInEntirePart = Int(log(self) / log(10) + 1)
+		let bitsInEntirePart = self == 0 ? 1 : Int(log(self) / log(10) + 1)
 		let scale = 18 - bitsInEntirePart
 		let multiplier = pow(10.0, Double(scale))
 		var scaledValue = self * multiplier
@@ -33,6 +34,5 @@ extension Double: FirebirdCodable {
 		
 		self = value
 	}
-	
 	
 }
