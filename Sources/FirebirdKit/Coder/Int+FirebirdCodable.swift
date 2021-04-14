@@ -7,54 +7,15 @@
 
 import Foundation
 
-extension Int: FirebirdCodable {
-	public static var firebirdDataType: FirebirdDataType { .double }
-	
-	public var firebirdData: FirebirdData {
-		var data: Data = Data()
-		var copy = self
-		
-		
-		withUnsafeBytes(of: &copy) { uself in
-			data.append(contentsOf: uself)
-		}
-		
-		return FirebirdData(
-			type: Self.firebirdDataType,
-			value: data)
-	}
-	
-	public init(from firebirdData: FirebirdData) throws {
-		if let value = firebirdData.value, value.count == 2 {
-			self = Int(try Int16(from: firebirdData))
-			return
-		}
-		
-		guard let value = firebirdData.long else {
-			throw FirebirdDecoder.FirebirdDecoderError.unableToDecodeDataToType(Self.self)
-		}
-		
-		self = value
-	}
-	
-	
-}
-
 extension Int16: FirebirdCodable {
+	
 	public static var firebirdDataType: FirebirdDataType { .short }
 	
 	public var firebirdData: FirebirdData {
-		var data: Data = Data()
 		var copy = self
+		let data = withUnsafeBytes(of: &copy) { Data($0) }
 		
-		
-		withUnsafeBytes(of: &copy) { uself in
-			data.append(contentsOf: uself)
-		}
-		
-		return FirebirdData(
-			type: Self.firebirdDataType,
-			value: data)
+		return FirebirdData(type: Self.firebirdDataType, value: data)
 	}
 	
 	public init(from firebirdData: FirebirdData) throws {
@@ -65,5 +26,69 @@ extension Int16: FirebirdCodable {
 		self = value
 	}
 	
+}
+
+extension Int32: FirebirdCodable {
+	
+	public static var firebirdDataType: FirebirdDataType { .long }
+	
+	public var firebirdData: FirebirdData {
+		var copy = self
+		let data = withUnsafeBytes(of: &copy) { Data($0) }
+		
+		return FirebirdData(type: Self.firebirdDataType, value: data)
+	}
+	
+	public init(from firebirdData: FirebirdData) throws {
+		guard let longValue = firebirdData.long else {
+			throw FirebirdDecoder.FirebirdDecoderError.unableToDecodeDataToType(Self.self)
+		}
+		
+		self = longValue
+	}
 	
 }
+
+extension Int: FirebirdCodable {
+	
+	public static var firebirdDataType: FirebirdDataType { .double }
+	
+	public var firebirdData: FirebirdData {
+		let int16Range = Int(Int16.min) ... Int(Int16.max)
+		let int32Range = Int(Int32.min) ... Int(Int32.max)
+		
+		if int16Range.contains(self) {
+			return Int16(self).firebirdData
+		}
+		
+		if int32Range.contains(self) {
+			return Int32(self).firebirdData
+		}
+		
+		var copy = self
+		let data = withUnsafeBytes(of: &copy) { Data($0) }
+		
+		return FirebirdData(type: Self.firebirdDataType, value: data)
+	}
+	
+	public init(from firebirdData: FirebirdData) throws {
+		switch firebirdData.type {
+			case .short:
+				if let shortValue = firebirdData.short {
+					self = Int(shortValue)
+					return
+				}
+			case .long:
+				if let longValue = firebirdData.long {
+					self = Int(longValue)
+					return
+				}
+			default:
+				throw FirebirdDecoder.FirebirdDecoderError.unableToDecodeDataToType(Self.self)
+		}
+		
+		throw FirebirdDecoder.FirebirdDecoderError.unableToDecodeDataToType(Self.self)
+	}
+	
+}
+
