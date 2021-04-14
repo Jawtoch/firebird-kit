@@ -37,6 +37,7 @@ extension FirebirdSQLDatabase: SQLDatabase {
 	public func execute(sql query: SQLExpression, _ onRow: @escaping (SQLRow) -> ()) -> EventLoopFuture<Void> {
 		let promise = self.eventLoop.makePromise(of: Void.self)
 		
+		// TODO: - support for different type of expression (SELECT, UPDATE…)
 		let (sql, binds) = self.serialize(query)
 		do {
 			let firebirdBinds = try binds.map { try self.encoder.encode($0) }
