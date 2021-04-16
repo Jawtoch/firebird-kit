@@ -51,15 +51,15 @@ extension Int32: FirebirdCodable {
 
 extension Int: FirebirdCodable {
 	
-	public static var firebirdDataType: FirebirdDataType { .double }
+	public static var firebirdDataType: FirebirdDataType { .long }
 	
 	public var firebirdData: FirebirdData {
-		let int16Range = Int(Int16.min) ... Int(Int16.max)
+//		let int16Range = Int(Int16.min) ... Int(Int16.max)
 		let int32Range = Int(Int32.min) ... Int(Int32.max)
 		
-		if int16Range.contains(self) {
-			return Int16(self).firebirdData
-		}
+//		if int16Range.contains(self) {
+//			return Int16(self).firebirdData
+//		}
 		
 		if int32Range.contains(self) {
 			return Int32(self).firebirdData
