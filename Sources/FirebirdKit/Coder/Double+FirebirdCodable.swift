@@ -15,7 +15,7 @@ extension Double: FirebirdCodable {
 		let bitsInEntirePart = self == 0 ? 1 : Int(log(self) / log(10) + 1)
 		let scale = 18 - bitsInEntirePart
 		let multiplier = pow(10.0, Double(scale))
-		var scaledValue = self * multiplier
+		var scaledValue = Int(self * multiplier)
 		
 		let data = withUnsafeBytes(of: &scaledValue) { buffer in
 			return Data(buffer)
