@@ -64,6 +64,35 @@ final class FirebirdKitTests: XCTestCase {
 		}
 	}
 	
+	func testQuery() throws {
+		let configuration = FirebirdConnectionConfiguration(
+			host: FirebirdDatabaseHost(
+				hostname: "localhost",
+				port: 3050),
+			username: "SYSDBA",
+			password: "SMETHING",
+			database: "employee")
+		let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+		defer {
+			try! eventLoopGroup.syncShutdownGracefully()
+		}
+		let eventLoop = eventLoopGroup.next()
+		
+		let connection = FirebirdNIOConnection.connect(configuration, on: eventLoop)
+		
+		let database = connection.map { FirebirdSQLDatabase(database: $0) }
+		
+		let query = database.map { $0.select().from("employee").column("first_name").where("last_name", .equal, ["Foo"])
+		}
+		
+		let rows = try query.flatMap { $0.all() }.wait()
+		
+		for row in rows {
+			let value = try row.decode(column: "FIRST_NAME", as: String.self)
+			print(value)
+		}
+	}
+	
     static var allTests = [
 		("testCodableBool", testCodableBool),
 		("testCodableInt", testCodableInt),

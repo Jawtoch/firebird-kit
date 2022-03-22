@@ -5,6 +5,8 @@
 //  Created by Ugo Cottin on 19/03/2021.
 //
 
+import Firebird
+
 public struct FirebirdSQLDatabase {
 	
 	/// Non blocking database that support query string
@@ -40,7 +42,13 @@ extension FirebirdSQLDatabase: SQLDatabase {
 		// TODO: - support for different type of expression (SELECT, UPDATE…)
 		let (sql, binds) = self.serialize(query)
 		do {
-			let firebirdBinds = try binds.map { try self.encoder.encode($0) }
+			let firebirdBinds = try binds.map { bind -> FirebirdDataConvertible in
+				guard let bind = bind as? FirebirdDataConvertible else {
+					throw FirebirdCustomError(reason: "Unsupported type: \(type(of: bind))")
+				}
+				
+				return bind
+			}
 			self.database.query(sql, firebirdBinds) { onRow($0.sql(decoder: self.decoder)) }
 				.cascade(to: promise)
 		} catch {
@@ -67,14 +75,14 @@ public struct FirebirdSQLRow {
 	public let row: FirebirdRow
 	public let decoder: FirebirdDecoder
 	
-	public func data(for column: String) throws -> FirebirdData {
+	/*public func data(for column: String) throws -> FirebirdDataConvertible {
 		guard self.contains(column: column) else {
 			throw FirebirdSQLRow.Error.noSuchColumn(column)
 		}
 		
 		let column = self.row.values.first { $0.key == column }!
 		return column.value
-	}
+	}*/
 	
 }
 
@@ -94,13 +102,23 @@ extension FirebirdSQLRow: SQLRow {
 		}
 		
 		let column = self.row.values.first { $0.key == column }!
-		let firebirdData = column.value
-		return firebirdData.value == nil
+		let (_, data) = column.value
+		return data == nil
 	}
 	
 	public func decode<D>(column: String, as type: D.Type) throws -> D where D : Decodable {
-		let data = try self.data(for: column)
-		return try self.decoder.decode(D.self, from: data)
+		guard self.contains(column: column) else {
+			throw FirebirdSQLRow.Error.noSuchColumn(column)
+		}
+		
+		guard let Convertible = type as? FirebirdDataConvertible.Type else {
+			throw FirebirdCustomError(reason: "")
+		}
+		
+		let column = self.row.values.first { $0.key == column }!
+		let (context, data) = column.value
+		
+		return Convertible.init(data!, using: context)! as! D
 	}
 	
 }
