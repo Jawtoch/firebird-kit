@@ -1,11 +1,11 @@
-// swift-tools-version:5.7.0
+// swift-tools-version:5.1.0
 
 import PackageDescription
 
 let package = Package(
     name: "firebird-kit",
     platforms: [
-        .macOS(.v12),
+        .macOS(.v10_15),
     ],
     products: [
         .library(name: "FirebirdNIO",
