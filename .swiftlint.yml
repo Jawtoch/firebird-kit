@@ -1,0 +1,37 @@
+opt_in_rules:
+  - indentation_width
+  - empty_count
+  - empty_string
+  - explicit_self
+  - anonymous_argument_in_multiline_closure
+  - anyobject_protocol
+  - closure_end_indentation
+  - closure_spacing
+  - collection_alignment
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - contains_over_first_not_nil
+  - contains_over_range_nil_comparison
+
+included:
+  - Sources
+
+excluded:
+  - .build
+
+indentation_width:
+  indentation_width: 4
+
+force_cast:
+  severity: warning
+
+force_try:
+  severity: error
+
+line_length: 250
+
+file_length:
+  warning: 500
+  error: 1200
+
+reporter: "xcode"
